@@ -232,7 +232,7 @@ router.post(
             const [currentUser] = await db.select().from(users).where(eq(users.id, userId));
             await db
                 .update(users)
-                .set({ verificationsUsed: (currentUser.verificationsUsed || 0) + 1 })
+                .set({ verificationsUsed: (currentUser.verificationsUsed || 0) + 1 } as any)
                 .where(eq(users.id, userId));
 
             res.end();
