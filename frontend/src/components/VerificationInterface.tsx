@@ -64,7 +64,8 @@ export default function VerificationInterface() {
         try {
             // Use progressive SSE endpoint with fetch
             const token = localStorage.getItem('accessToken');
-            const response = await fetch('http://localhost:3000/api/verify/progressive', {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+            const response = await fetch(`${API_URL}/verify/progressive`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
