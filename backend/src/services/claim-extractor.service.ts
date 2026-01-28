@@ -16,9 +16,22 @@ export class ClaimExtractorService {
      */
     static async extractClaims(text: string): Promise<AtomicClaim[]> {
         const { RateLimitHandler } = require('./rate-limit-handler.service');
+        const { redisService } = require('./redis.service');
+        const crypto = require('crypto');
 
         return RateLimitHandler.executeWithRetry(async () => {
             try {
+                // 1. Generate Cache Key
+                const textHash = crypto.createHash('sha256').update(text).digest('hex');
+                const cacheKey = `claims:${textHash}`;
+
+                // 2. Check Cache
+                const cachedClaims = await redisService.get(cacheKey);
+                if (cachedClaims) {
+                    console.log('Cache Hit: Claims found in Redis');
+                    return cachedClaims;
+                }
+
                 const prompt = `You are a precise fact-checking assistant. Your task is to decompose the following text into atomic, verifiable claims.
 
 INSTRUCTIONS:
@@ -71,7 +84,7 @@ Extract all atomic claims now:`;
                     throw new Error('Invalid claim extraction response format');
                 }
 
-                return parsed.claims.map((claim: any) => {
+                const formattedClaims = parsed.claims.map((claim: any) => {
                     // Snap indices to full sentences for better highlighting
                     const indices = this.snapToSentence(text, claim.startIndex || 0, claim.endIndex || 0);
                     return {
@@ -81,6 +94,11 @@ Extract all atomic claims now:`;
                         endIndex: indices.end,
                     };
                 });
+
+                // 3. Save to Cache (TTL: 24 hours)
+                await redisService.set(cacheKey, formattedClaims, 86400);
+
+                return formattedClaims;
             } catch (error) {
                 console.error('Claim extraction error:', error);
                 throw error; // Let RateLimitHandler handle retries

@@ -16,7 +16,20 @@ export class EvidenceRetrievalService {
      * Retrieve evidence for a claim using Exa Search API
      */
     static async retrieveEvidence(claim: string): Promise<EvidenceSource[]> {
+        const { redisService } = require('./redis.service');
+        const crypto = require('crypto');
+
         try {
+            // 1. Check Cache
+            const queryHash = crypto.createHash('sha256').update(claim).digest('hex');
+            const cacheKey = `evidence:${queryHash}`;
+
+            const cachedEvidence = await redisService.get(cacheKey);
+            if (cachedEvidence) {
+                console.log('Cache Hit: Evidence found in Redis');
+                return cachedEvidence;
+            }
+
             // Optimize claim for search
             const searchQuery = this.optimizeSearchQuery(claim);
 
