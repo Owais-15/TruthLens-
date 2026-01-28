@@ -1,9 +1,15 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
 import VerificationInterface from '../components/VerificationInterface';
+import AccountPanel from '../components/AccountPanel';
 
 export default function DashboardPage() {
-    const { user, logout } = useAuthStore();
+    const { user } = useAuthStore();
+    const [showAccount, setShowAccount] = useState(false);
+
+    // Get user initial for avatar
+    const userInitial = user ? (user.name || user.email).charAt(0).toUpperCase() : 'U';
 
     return (
         <div className="min-h-screen">
@@ -32,18 +38,20 @@ export default function DashboardPage() {
 
                     <div className="flex items-center gap-4">
                         {user && (
-                            <div className="text-sm">
+                            <div className="text-sm text-right">
                                 <p className="text-text-primary font-medium">{user.name || user.email}</p>
                                 <p className="text-text-secondary text-xs">
                                     {user.verificationsUsed} / {user.verificationsLimit} verifications
                                 </p>
                             </div>
                         )}
+                        {/* Account Icon */}
                         <button
-                            onClick={logout}
-                            className="px-4 py-2 text-sm bg-bg-secondary hover:bg-bg-tertiary rounded-lg transition-colors"
+                            onClick={() => setShowAccount(true)}
+                            className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-lg font-bold text-white hover:scale-110 transition-transform shadow-lg"
+                            title="Account"
                         >
-                            Logout
+                            {userInitial}
                         </button>
                     </div>
                 </div>
@@ -53,6 +61,9 @@ export default function DashboardPage() {
             <main className="max-w-7xl mx-auto px-4 pb-8">
                 <VerificationInterface />
             </main>
+
+            {/* Account Panel */}
+            <AccountPanel isOpen={showAccount} onClose={() => setShowAccount(false)} />
         </div>
     );
 }
