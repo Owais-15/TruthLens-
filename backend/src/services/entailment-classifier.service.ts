@@ -50,40 +50,49 @@ ${evidenceContext}
 
 CRITICAL INSTRUCTIONS:
 1. **Thorough Text Analysis**: Carefully read ALL the evidence text, not just titles or URLs
-2. **Extract Key Facts**: Look for specific facts, dates, numbers, and names mentioned in the evidence text
-3. **Cross-Attention Analysis**: Map semantic relationships between claim tokens and evidence tokens
-4. **Semantic Understanding**: Recognize synonyms and paraphrases (e.g., "completed" = "finished" = "built", "1889" = "eighteen eighty-nine")
-5. **Be Precise**: If the evidence text contains the exact information needed to verify the claim, classify as entailment
+2. **Extract Key Facts**: Look for specific facts, dates, numbers, and names mentioned in BOTH claim and evidence
+3. **Compare Facts Explicitly**: If the claim mentions a specific date/number/name, check if the evidence mentions a DIFFERENT one
+4. **Contradiction Detection**: If evidence states a DIFFERENT fact than the claim, that's a CONTRADICTION (not neutral!)
+5. **Be Precise**: Only mark as neutral if the evidence truly doesn't mention the topic at all
 
-CLASSIFICATION RULES:
-- **entailment**: Evidence text EXPLICITLY contains information that supports the claim
-  * The specific facts, dates, or numbers in the claim are present in the evidence
-  * Authoritative source confirmation
-  * High confidence (≥75%)
-  
-- **contradiction**: Evidence text EXPLICITLY contains information that refutes the claim
-  * Direct factual conflict with the claim
-  * Authoritative source refutation
-  * High confidence (≥75%)
-  
-- **neutral**: Evidence is insufficient or ambiguous
-  * The evidence text doesn't contain the specific information needed
-  * Confidence below 75%
-  * Evidence is tangentially related but not directly confirmatory
+CLASSIFICATION RULES (CRITICAL - READ CAREFULLY):
+
+**CONTRADICTION** (Most Important - Don't Miss These!):
+- Evidence contains DIFFERENT factual information than the claim
+  * Example: Claim says "built in 1822", evidence says "built in 1889" → CONTRADICTION
+  * Example: Claim says "330 meters tall", evidence says "300 meters tall" → CONTRADICTION
+  * Example: Claim says "used as sundial", evidence says "used as radio tower" → CONTRADICTION
+- Direct factual conflict with authoritative sources
+- High confidence (≥75%)
+- **IMPORTANT**: If you find ANY conflicting fact in the evidence, classify as CONTRADICTION!
+
+**ENTAILMENT**:
+- Evidence text EXPLICITLY contains information that supports the claim
+- The EXACT same facts, dates, or numbers are present in both claim and evidence
+  * Example: Claim says "built in 1889", evidence says "completed in 1889" → ENTAILMENT
+- Authoritative source confirmation
+- High confidence (≥75%)
+
+**NEUTRAL** (Use Sparingly!):
+- Evidence is insufficient or doesn't mention the specific topic at all
+  * The evidence is about a completely different subject
+  * The evidence is too vague or ambiguous
+- **NOT neutral if**: Evidence mentions the topic but with different facts (that's CONTRADICTION!)
+- Confidence below 75%
 
 CONFIDENCE SCORING:
-- 90-100: Multiple sources with exact matching facts
-- 75-89: Clear support from reliable sources with specific details
+- 90-100: Multiple sources with exact matching facts OR clear contradiction
+- 75-89: Clear support/refutation from reliable sources
 - 50-74: Partial or indirect evidence
 - 0-49: Weak or missing evidence
 
-IMPORTANT: Read the full evidence text carefully. If it contains the specific information from the claim (like dates, numbers, names), that's strong evidence for entailment.
+**CRITICAL REMINDER**: When you see conflicting dates, numbers, or facts between claim and evidence, always classify as CONTRADICTION, not neutral!
 
 OUTPUT FORMAT (JSON):
 {
   "verdict": "entailment|contradiction|neutral",
   "confidence": 85,
-  "reasoning": "Detailed explanation citing specific facts found (or not found) in the evidence text"
+  "reasoning": "Detailed explanation citing specific facts found (or not found) in the evidence text. If contradiction, explicitly state what the claim says vs what the evidence says."
 }
 
 Classify now:`;
