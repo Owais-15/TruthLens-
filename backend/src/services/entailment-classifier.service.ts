@@ -1,8 +1,8 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { EvidenceSource } from './evidence-retrieval.service';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-2.5-flash' });
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
+const DEFAULT_MODEL = 'llama-3.1-8b-instant';
 
 export interface EntailmentResult {
     verdict: 'entailment' | 'contradiction' | 'neutral';
@@ -88,14 +88,20 @@ OUTPUT FORMAT (JSON):
 
 Classify now:`;
 
-                const result = await model.generateContent(prompt);
-                const response = result.response;
-                const responseText = response.text();
+                const modelName = process.env.GROQ_MODEL || DEFAULT_MODEL;
+                const completion = await groq.chat.completions.create({
+                    messages: [{ role: 'user', content: prompt }],
+                    model: modelName,
+                    temperature: 0.2, // Very low for factual classification
+                    max_tokens: 500,
+                });
+
+                const responseText = completion.choices[0]?.message?.content || '';
 
                 // Parse JSON response
                 const jsonMatch = responseText.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) {
-                    console.error('Failed to parse Gemini response:', responseText);
+                    console.error('Failed to parse Groq response:', responseText);
                     throw new Error('Failed to parse entailment classification response');
                 }
 
