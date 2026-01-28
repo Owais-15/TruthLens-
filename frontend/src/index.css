@@ -147,10 +147,11 @@ body {
   animation: slideUp 0.4s ease-out;
 }
 
-/* Verification Highlights */
+/* Verification Highlights - Dark Mode Optimized */
 .highlight-verified {
-  background-color: var(--color-verified-light);
+  background-color: rgba(16, 185, 129, 0.15);
   border-bottom: 2px solid var(--color-verified);
+  color: #d1fae5;
   padding: 2px 4px;
   border-radius: 3px;
   cursor: pointer;
@@ -158,12 +159,13 @@ body {
 }
 
 .highlight-verified:hover {
-  background-color: #a7f3d0;
+  background-color: rgba(16, 185, 129, 0.25);
 }
 
 .highlight-contradicted {
-  background-color: var(--color-contradicted-light);
+  background-color: rgba(239, 68, 68, 0.15);
   border-bottom: 2px solid var(--color-contradicted);
+  color: #fecaca;
   padding: 2px 4px;
   border-radius: 3px;
   cursor: pointer;
@@ -171,12 +173,13 @@ body {
 }
 
 .highlight-contradicted:hover {
-  background-color: #fecaca;
+  background-color: rgba(239, 68, 68, 0.25);
 }
 
 .highlight-neutral {
-  background-color: var(--color-neutral-light);
+  background-color: rgba(245, 158, 11, 0.15);
   border-bottom: 2px solid var(--color-neutral);
+  color: #fde68a;
   padding: 2px 4px;
   border-radius: 3px;
   cursor: pointer;
@@ -184,7 +187,7 @@ body {
 }
 
 .highlight-neutral:hover {
-  background-color: #fde68a;
+  background-color: rgba(245, 158, 11, 0.25);
 }
 
 .highlight-verifying {

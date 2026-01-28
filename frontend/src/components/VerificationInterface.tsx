@@ -194,7 +194,7 @@ export default function VerificationInterface() {
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Enter text to verify (10-5000 characters)..."
-                    className="w-full h-40 px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg resize-none focus:ring-2 focus:ring-primary-500 transition-all"
+                    className="w-full h-40 px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg resize-none focus:ring-2 focus:ring-primary-500 transition-all text-white placeholder-gray-400"
                     disabled={isVerifying}
                 />
 

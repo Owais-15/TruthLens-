@@ -65,7 +65,7 @@ export default function RegisterPage() {
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="w-full px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg focus:ring-2 focus:ring-primary-500 transition-all"
+                            className="w-full px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg focus:ring-2 focus:ring-primary-500 transition-all text-white placeholder-gray-400"
                             placeholder="John Doe"
                         />
                     </div>
@@ -80,7 +80,7 @@ export default function RegisterPage() {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            className="w-full px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg focus:ring-2 focus:ring-primary-500 transition-all"
+                            className="w-full px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg focus:ring-2 focus:ring-primary-500 transition-all text-white placeholder-gray-400"
                             placeholder="you@example.com"
                         />
                     </div>
@@ -95,7 +95,7 @@ export default function RegisterPage() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            className="w-full px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg focus:ring-2 focus:ring-primary-500 transition-all"
+                            className="w-full px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg focus:ring-2 focus:ring-primary-500 transition-all text-white placeholder-gray-400"
                             placeholder="••••••••"
                         />
                         <p className="text-xs text-text-secondary mt-1">
@@ -113,7 +113,7 @@ export default function RegisterPage() {
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             required
-                            className="w-full px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg focus:ring-2 focus:ring-primary-500 transition-all"
+                            className="w-full px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg focus:ring-2 focus:ring-primary-500 transition-all text-white placeholder-gray-400"
                             placeholder="••••••••"
                         />
                     </div>
