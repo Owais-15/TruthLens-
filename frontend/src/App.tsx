@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import HistoryPage from './pages/HistoryPage';
+import TestVerificationPage from './pages/TestVerificationPage';
 
 function App() {
     const { isAuthenticated, isLoading, loadUser } = useAuthStore();
@@ -24,6 +25,9 @@ function App() {
     return (
         <BrowserRouter>
             <Routes>
+                {/* Test route - no auth required */}
+                <Route path="/test" element={<TestVerificationPage />} />
+
                 <Route
                     path="/login"
                     element={isAuthenticated ? <Navigate to="/" /> : <LoginPage />}
@@ -34,7 +38,7 @@ function App() {
                 />
                 <Route
                     path="/"
-                    element={isAuthenticated ? <DashboardPage /> : <Navigate to="/login" />}
+                    element={isAuthenticated ? <DashboardPage /> : <Navigate to="/test" />}
                 />
                 <Route
                     path="/history"

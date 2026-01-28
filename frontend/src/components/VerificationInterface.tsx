@@ -2,6 +2,8 @@ import { useState } from 'react';
 import HighlightedText from './HighlightedText';
 import EvidencePanel from './EvidencePanel';
 import TrustScoreDisplay from './TrustScoreDisplay';
+import ClaimDetailsPanel from './ClaimDetailsPanel';
+import PDFExport from './PDFExport';
 
 interface ClaimVerification {
     claim: {
@@ -35,6 +37,22 @@ interface VerificationResult {
     };
 }
 
+// Example texts for quick testing
+const EXAMPLE_TEXTS = [
+    {
+        name: "High Trust Example",
+        text: "The Eiffel Tower, located in Paris, France, was completed in 1889 and stands approximately 300 meters tall. It was designed by engineer Gustave Eiffel and was initially built as the entrance arch for the 1889 World's Fair."
+    },
+    {
+        name: "Mixed Trust Example",
+        text: "Albert Einstein developed the theory of relativity in 1905 and won the Nobel Prize in Physics in 1921. He was born in Germany in 1879 and later became a professor at Princeton University in New Jersey."
+    },
+    {
+        name: "Low Trust Example",
+        text: "The Eiffel Tower, a remarkable iron lattice structure standing proudly in Paris, was originally built as a giant sundial in 1822, intended to cast shadows across the city to mark the hours. Designed by the renowned architect Gustave Eiffel, the tower stands 330 meters tall and once housed the city's first observatory."
+    }
+];
+
 export default function VerificationInterface() {
     const [inputText, setInputText] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
@@ -43,6 +61,7 @@ export default function VerificationInterface() {
     const [selectedClaim, setSelectedClaim] = useState<ClaimVerification | null>(null);
     const [phase, setPhase] = useState<1 | 2 | null>(null);
     const [verifyingCount, setVerifyingCount] = useState(0);
+    const [loadingMessage, setLoadingMessage] = useState('');
 
     const handleVerify = async () => {
         if (!inputText.trim()) {
@@ -181,39 +200,95 @@ export default function VerificationInterface() {
         setSelectedClaim(claim);
     };
 
+    const loadExample = (index: number) => {
+        setInputText(EXAMPLE_TEXTS[index].text);
+        setResult(null);
+        setError('');
+    };
+
+    const clearText = () => {
+        setInputText('');
+        setResult(null);
+        setError('');
+        setSelectedClaim(null);
+    };
+
+    const getCharacterCountColor = () => {
+        const length = inputText.length;
+        if (length > 4500) return 'text-red-400';
+        if (length > 3500) return 'text-yellow-400';
+        return 'text-text-secondary';
+    };
+
     return (
         <div className="space-y-6">
             {/* Input Section */}
             <div className="glass-card p-6 animate-slide-up">
-                <h2 className="text-2xl font-bold mb-4">Verify AI-Generated Content</h2>
+                <h2 className="text-2xl font-bold mb-2">Verify AI-Generated Content</h2>
                 <p className="text-text-secondary mb-6">
                     Paste AI-generated text below to check for hallucinations and verify factual accuracy.
+                    <br />
+                    <span className="text-xs">✨ Tip: Longer texts (100+ words) give more accurate results</span>
                 </p>
 
-                <textarea
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder="Enter text to verify (10-5000 characters)..."
-                    className="w-full h-40 px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg resize-none focus:ring-2 focus:ring-primary-500 transition-all text-white placeholder-gray-400"
-                    disabled={isVerifying}
-                />
+                {/* Example Texts Buttons */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                    <span className="text-xs font-semibold text-text-secondary flex items-center">TRY AN EXAMPLE:</span>
+                    {EXAMPLE_TEXTS.map((example, index) => (
+                        <button
+                            key={index}
+                            onClick={() => loadExample(index)}
+                            disabled={isVerifying}
+                            className="px-3 py-1.5 text-xs font-medium bg-bg-secondary hover:bg-bg-tertiary border border-glass-border rounded-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {example.name}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Textarea with Clear Button */}
+                <div className="relative">
+                    <textarea
+                        value={inputText}
+                        onChange={(e) => setInputText(e.target.value)}
+                        placeholder="Paste AI-generated content here...&#10;&#10;Example: Try pasting ChatGPT responses, article summaries, or any AI-written text to check for hallucinations."
+                        className="w-full h-40 px-4 py-3 bg-bg-secondary border border-glass-border rounded-lg resize-none focus:ring-2 focus:ring-primary-500 transition-all text-white placeholder-gray-400"
+                        disabled={isVerifying}
+                    />
+                    {inputText && !isVerifying && (
+                        <button
+                            onClick={clearText}
+                            className="absolute top-3 right-3 text-text-secondary hover:text-red-400 transition-colors"
+                            title="Clear text"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    )}
+                </div>
 
                 <div className="flex items-center justify-between mt-4">
-                    <p className="text-sm text-text-secondary">
+                    <p className={`text-sm font-medium ${getCharacterCountColor()}`}>
                         {inputText.length} / 5000 characters
                     </p>
                     <button
                         onClick={handleVerify}
                         disabled={isVerifying || !inputText.trim()}
-                        className="btn-primary"
+                        className="btn-primary px-6 py-3 hover:scale-105 transition-transform disabled:hover:scale-100"
                     >
                         {isVerifying ? (
                             <span className="flex items-center gap-2">
                                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                {phase === 1 ? 'Quick Check...' : phase === 2 ? `Verifying ${verifyingCount} claims...` : 'Verifying...'}
+                                {phase === 1 ? 'Analyzing claims...' : phase === 2 ? `Verifying ${verifyingCount} claims...` : 'Processing...'}
                             </span>
                         ) : (
-                            'Verify Text'
+                            <span className="flex items-center gap-2">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Verify Text
+                            </span>
                         )}
                     </button>
                 </div>
@@ -268,6 +343,22 @@ export default function VerificationInterface() {
                         <div className="glass-card p-6 animate-fade-in">
                             <EvidencePanel claim={selectedClaim} />
                         </div>
+                    </div>
+
+                    {/* PDF Export Button */}
+                    <div className="flex justify-end mt-6 animate-fade-in">
+                        <PDFExport
+                            originalText={inputText}
+                            trustScore={result.trustScore}
+                            claims={result.claims}
+                            summary={result.summary}
+                            processingTime={result.processingTime}
+                        />
+                    </div>
+
+                    {/* Detailed Claim Analysis */}
+                    <div className="glass-card p-6 animate-fade-in">
+                        <ClaimDetailsPanel claims={result.claims} />
                     </div>
                 </>
             )}

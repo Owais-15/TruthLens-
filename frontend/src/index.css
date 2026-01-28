@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -87,6 +89,26 @@ body {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-primary:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .btn-primary:hover {
@@ -102,6 +124,23 @@ body {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+/* Pulsing effect for CTA */
+@keyframes pulse-button {
+
+  0%,
+  100% {
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 4px 20px rgba(14, 165, 233, 0.5);
+  }
+}
+
+.btn-primary:not(:disabled):not(:hover) {
+  animation: pulse-button 2s ease-in-out infinite;
 }
 
 /* Animations */
@@ -127,6 +166,18 @@ body {
   }
 }
 
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 @keyframes pulse-glow {
 
   0%,
@@ -145,6 +196,10 @@ body {
 
 .animate-slide-up {
   animation: slideUp 0.4s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
 }
 
 /* Verification Highlights - Dark Mode Optimized */
