@@ -1,45 +1,30 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { EvidenceRetrievalService, EvidenceSource } from './evidence-retrieval.service';
 import { EntailmentClassifierService } from './entailment-classifier.service';
 import { ClaimImportanceAnalyzer } from './claim-importance.service';
 import { AtomicClaim } from './claim-extractor.service';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-// List of models to try in order of preference
-const FALLBACK_MODELS = [
-    'gemini-1.5-flash',
-    'gemini-1.0-pro',
-    'gemini-2.0-flash-exp',
-    'gemini-pro'
-];
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
+const DEFAULT_MODEL = 'llama-3.1-8b-instant'; // Fast and reliable
 
-// Helper to execute with model fallback
-async function executeWithModelFallback(prompt: string): Promise<any> {
-    const primaryModel = process.env.GEMINI_MODEL;
-    // If a specific model is set in env, try it first, then fall back to the list
-    const modelsToTry = primaryModel ? [primaryModel, ...FALLBACK_MODELS.filter(m => m !== primaryModel)] : FALLBACK_MODELS;
+// Helper to execute with Groq
+async function executeWithGroq(prompt: string): Promise<string> {
+    try {
+        const modelName = process.env.GROQ_MODEL || DEFAULT_MODEL;
+        console.log(`Using Groq model: ${modelName}`);
 
-    let lastError;
+        const completion = await groq.chat.completions.create({
+            messages: [{ role: 'user', content: prompt }],
+            model: modelName,
+            temperature: 0.3, // Lower temperature for factual tasks
+            max_tokens: 2000,
+        });
 
-    for (const modelName of modelsToTry) {
-        try {
-            const currentModel = genAI.getGenerativeModel({ model: modelName });
-            console.log(`Trying Gemini model: ${modelName}`);
-            const result = await currentModel.generateContent(prompt);
-            return result;
-        } catch (error: any) {
-            console.warn(`Model ${modelName} failed: ${error.message}`);
-            lastError = error;
-
-            // Continue only if it's a 404 (Not Found) or 429 (Rate Limit) or 503 (Overloaded)
-            if (error.message?.includes('404') || error.message?.includes('429') || error.message?.includes('503')) {
-                continue;
-            }
-            // For other errors (like invalid API key), fail fast
-            throw error;
-        }
+        return completion.choices[0]?.message?.content || '';
+    } catch (error: any) {
+        console.error(`Groq API error: ${error.message}`);
+        throw new Error(`Groq API failed: ${error.message}`);
     }
-    throw new Error(`All Gemini models failed. Last error: ${lastError?.message}`);
 }
 
 export interface ProgressiveClaimResult {
@@ -109,8 +94,7 @@ export class ProgressiveVerificationService {
 
 Text: """${text}"""`;
 
-            const result = await executeWithModelFallback(prompt);
-            const responseText = result.response.text();
+            const responseText = await executeWithGroq(prompt);
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             if (!jsonMatch) throw new Error('Failed to parse claims');
 
