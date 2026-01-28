@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAuthStore } from '../store/auth.store';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,19 +6,13 @@ interface AccountPanelProps {
     onClose: () => void;
 }
 
-// Mock user data
-const MOCK_USER = {
-    name: 'Test User',
-    email: 'test@truthlens.com',
-    tier: 'Free',
-    verificationsUsed: 18,
-    verificationsLimit: 100
-};
-
 export default function AccountPanel({ isOpen, onClose }: AccountPanelProps) {
-    const [user] = useState(MOCK_USER);
-    const { logout } = useAuthStore();
+    const { user, logout } = useAuthStore();
     const navigate = useNavigate();
+
+    // If no user is logged in, don't show the panel
+    if (!user) return null;
+
     const usagePercentage = (user.verificationsUsed / user.verificationsLimit) * 100;
 
     const handleLogout = () => {
@@ -60,10 +53,10 @@ export default function AccountPanel({ isOpen, onClose }: AccountPanelProps) {
                         <div className="bg-bg-secondary rounded-lg p-6">
                             <div className="flex items-center gap-4 mb-4">
                                 <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-2xl font-bold text-white">
-                                    {user.name.charAt(0).toUpperCase()}
+                                    {(user.name || user.email).charAt(0).toUpperCase()}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-text-primary">{user.name}</h3>
+                                    <h3 className="text-lg font-bold text-text-primary">{user.name || 'User'}</h3>
                                     <p className="text-sm text-text-secondary">{user.email}</p>
                                 </div>
                             </div>

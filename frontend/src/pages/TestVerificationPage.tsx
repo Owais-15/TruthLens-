@@ -2,10 +2,15 @@ import { useState } from 'react';
 import VerificationInterface from '../components/VerificationInterface';
 import VerificationHistory from '../components/VerificationHistory';
 import AccountPanel from '../components/AccountPanel';
+import { useAuthStore } from '../store/auth.store';
 
 export default function TestVerificationPage() {
     const [showHistory, setShowHistory] = useState(false);
     const [showAccount, setShowAccount] = useState(false);
+    const { user } = useAuthStore();
+
+    // Get user initial for avatar
+    const userInitial = user ? (user.name || user.email).charAt(0).toUpperCase() : 'T';
 
     return (
         <div className="min-h-screen p-8">
@@ -38,7 +43,7 @@ export default function TestVerificationPage() {
                             className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-xl font-bold text-white hover:scale-110 transition-transform shadow-lg"
                             title="Account"
                         >
-                            T
+                            {userInitial}
                         </button>
                     </div>
                 </div>
