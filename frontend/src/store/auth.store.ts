@@ -21,6 +21,8 @@ interface AuthState {
     logout: () => void;
     loadUser: () => Promise<void>;
     clearError: () => void;
+    updateProfile: (data: { name: string }) => Promise<void>;
+    changePassword: (data: any) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -87,4 +89,31 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     clearError: () => set({ error: null }),
+
+    updateProfile: async (data: { name: string }) => {
+        set({ isLoading: true, error: null });
+        try {
+            const response = await authAPI.updateProfile(data.name);
+            set((state) => ({
+                user: state.user ? { ...state.user, name: response.data.user.name } : null,
+                isLoading: false
+            }));
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.error || 'Failed to update profile';
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
+
+    changePassword: async (data: any) => {
+        set({ isLoading: true, error: null });
+        try {
+            await authAPI.changePassword(data);
+            set({ isLoading: false });
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.error || 'Failed to change password';
+            set({ error: errorMessage, isLoading: false });
+            throw error;
+        }
+    },
 }));

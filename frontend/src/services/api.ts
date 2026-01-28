@@ -73,6 +73,12 @@ export const authAPI = {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
     },
+
+    updateProfile: (name: string) =>
+        api.put('/auth/profile', { name }),
+
+    changePassword: (data: any) =>
+        api.put('/auth/password', data),
 };
 
 // Verification API
