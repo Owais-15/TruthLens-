@@ -61,7 +61,6 @@ export default function VerificationInterface() {
     const [selectedClaim, setSelectedClaim] = useState<ClaimVerification | null>(null);
     const [phase, setPhase] = useState<1 | 2 | null>(null);
     const [verifyingCount, setVerifyingCount] = useState(0);
-    const [loadingMessage, setLoadingMessage] = useState('');
 
     const handleVerify = async () => {
         if (!inputText.trim()) {

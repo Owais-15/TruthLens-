@@ -52,12 +52,6 @@ export default function VerificationHistory() {
         return 'text-red-400';
     };
 
-    const getScoreBadgeColor = (score: number) => {
-        if (score >= 80) return 'bg-green-500/20 border-green-500/50';
-        if (score >= 50) return 'bg-yellow-500/20 border-yellow-500/50';
-        return 'bg-red-500/20 border-red-500/50';
-    };
-
     const formatTimestamp = (date: Date) => {
         const now = new Date();
         const diff = now.getTime() - date.getTime();
