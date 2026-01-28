@@ -153,7 +153,7 @@ export class AuthService {
      */
     static async updateProfile(userId: number, name: string): Promise<User> {
         const [updatedUser] = await db.update(users)
-            .set({ name })
+            .set({ name } as any)
             .where(eq(users.id, userId))
             .returning();
 
