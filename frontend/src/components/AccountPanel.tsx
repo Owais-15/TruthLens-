@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useAuthStore } from '../store/auth.store';
+import { useNavigate } from 'react-router-dom';
 
 interface AccountPanelProps {
     isOpen: boolean;
@@ -16,7 +18,15 @@ const MOCK_USER = {
 
 export default function AccountPanel({ isOpen, onClose }: AccountPanelProps) {
     const [user] = useState(MOCK_USER);
+    const { logout } = useAuthStore();
+    const navigate = useNavigate();
     const usagePercentage = (user.verificationsUsed / user.verificationsLimit) * 100;
+
+    const handleLogout = () => {
+        logout();
+        onClose();
+        navigate('/login');
+    };
 
     if (!isOpen) return null;
 
@@ -80,8 +90,8 @@ export default function AccountPanel({ isOpen, onClose }: AccountPanelProps) {
                             <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden mb-2">
                                 <div
                                     className={`h-full transition-all duration-500 ${usagePercentage > 80 ? 'bg-red-500' :
-                                            usagePercentage > 50 ? 'bg-yellow-500' :
-                                                'bg-green-500'
+                                        usagePercentage > 50 ? 'bg-yellow-500' :
+                                            'bg-green-500'
                                         }`}
                                     style={{ width: `${usagePercentage}%` }}
                                 />
@@ -135,7 +145,10 @@ export default function AccountPanel({ isOpen, onClose }: AccountPanelProps) {
 
                     {/* Footer */}
                     <div className="p-6 border-t border-glass-border">
-                        <button className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-medium">
+                        <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors font-medium"
+                        >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>

@@ -38,7 +38,7 @@ function App() {
                 />
                 <Route
                     path="/"
-                    element={isAuthenticated ? <DashboardPage /> : <Navigate to="/test" />}
+                    element={isAuthenticated ? <DashboardPage /> : <Navigate to="/login" />}
                 />
                 <Route
                     path="/history"
