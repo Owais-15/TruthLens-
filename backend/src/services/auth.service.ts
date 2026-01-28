@@ -148,4 +148,40 @@ export class AuthService {
             where: eq(users.id, userId),
         });
     }
+    /**
+     * Update user profile
+     */
+    static async updateProfile(userId: number, name: string): Promise<User> {
+        const [updatedUser] = await db.update(users)
+            .set({ name })
+            .where(eq(users.id, userId))
+            .returning();
+
+        if (!updatedUser) {
+            throw new Error('User not found');
+        }
+
+        return updatedUser;
+    }
+
+    /**
+     * Change user password
+     */
+    static async changePassword(userId: number, currentPassword: string, newPassword: string): Promise<void> {
+        const user = await this.getUserById(userId);
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        const isValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isValid) {
+            throw new Error('Invalid current password');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+
+        await db.update(users)
+            .set({ password: hashedPassword })
+            .where(eq(users.id, userId));
+    }
 }

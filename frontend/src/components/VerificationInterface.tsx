@@ -309,27 +309,17 @@ export default function VerificationInterface() {
 
             {/* Results Section */}
             {result && (
-                <>
-                    {/* Trust Score */}
-                    <div className="glass-card p-6 animate-fade-in">
-                        <TrustScoreDisplay
-                            trustScore={result.trustScore}
-                            summary={result.summary}
-                            processingTime={result.processingTime}
-                        />
-                        {phase === 2 && verifyingCount > 0 && (
-                            <div className="mt-4 text-sm text-text-secondary flex items-center gap-2">
-                                <div className="w-3 h-3 border-2 border-primary-500/50 border-t-primary-500 rounded-full animate-spin"></div>
-                                Trust score updating as verification completes...
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Highlighted Text and Evidence */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="flex flex-col lg:flex-row gap-8 pb-12 animate-fade-in">
+                    {/* Left Column: Text & Claims */}
+                    <div className="flex-1 space-y-6 min-w-0 order-2 lg:order-1">
                         {/* Highlighted Text */}
-                        <div className="glass-card p-6 animate-fade-in">
-                            <h3 className="text-xl font-bold mb-4">Verified Text</h3>
+                        <div className="glass-card p-6">
+                            <h3 className="text-xl font-bold mb-4 flex items-center justify-between">
+                                Verified Text
+                                <span className="text-xs font-normal text-text-secondary bg-bg-secondary px-2 py-1 rounded">
+                                    Click highlighted segments for details
+                                </span>
+                            </h3>
                             <HighlightedText
                                 text={inputText}
                                 claims={result.claims}
@@ -338,28 +328,60 @@ export default function VerificationInterface() {
                             />
                         </div>
 
-                        {/* Evidence Panel */}
-                        <div className="glass-card p-6 animate-fade-in">
+                        {/* Evidence Panel (Mobile only - shows below text when claimed clicked) */}
+                        <div className="lg:hidden">
                             <EvidencePanel claim={selectedClaim} />
+                        </div>
+
+                        {/* Detailed Claim Analysis */}
+                        <div className="glass-card p-0 overflow-hidden">
+                            <div className="p-6 border-b border-glass-border bg-bg-secondary/30">
+                                <h3 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+                                    <span className="text-xl">🔍</span>
+                                    Detailed Claim Analysis
+                                </h3>
+                            </div>
+                            <ClaimDetailsPanel claims={result.claims} />
                         </div>
                     </div>
 
-                    {/* PDF Export Button */}
-                    <div className="flex justify-end mt-6 animate-fade-in">
-                        <PDFExport
-                            originalText={inputText}
-                            trustScore={result.trustScore}
-                            claims={result.claims}
-                            summary={result.summary}
-                            processingTime={result.processingTime}
-                        />
-                    </div>
+                    {/* Right Column: Score & Evidence (Desktop Sticky) */}
+                    <div className="lg:w-1/3 space-y-6 order-1 lg:order-2">
+                        <div className="glass-card p-6 sticky top-6">
+                            <TrustScoreDisplay
+                                trustScore={result.trustScore}
+                                summary={result.summary}
+                                processingTime={result.processingTime}
+                            />
 
-                    {/* Detailed Claim Analysis */}
-                    <div className="glass-card p-6 animate-fade-in">
-                        <ClaimDetailsPanel claims={result.claims} />
+                            {phase === 2 && verifyingCount > 0 && (
+                                <div className="mt-4 text-sm text-text-secondary flex items-center gap-2">
+                                    <div className="w-3 h-3 border-2 border-primary-500/50 border-t-primary-500 rounded-full animate-spin"></div>
+                                    Updating...
+                                </div>
+                            )}
+
+                            {/* PDF Export Button */}
+                            <div className="mt-6 pt-6 border-t border-glass-border">
+                                <PDFExport
+                                    originalText={inputText}
+                                    trustScore={result.trustScore}
+                                    claims={result.claims}
+                                    summary={result.summary}
+                                    processingTime={result.processingTime}
+                                />
+                            </div>
+
+                            {/* Evidence Panel (Desktop only) */}
+                            <div className="hidden lg:block mt-6">
+                                <h4 className="text-sm font-semibold text-text-secondary mb-3 uppercase tracking-wider">
+                                    Selected Evidence
+                                </h4>
+                                <EvidencePanel claim={selectedClaim} />
+                            </div>
+                        </div>
                     </div>
-                </>
+                </div>
             )}
         </div>
     );

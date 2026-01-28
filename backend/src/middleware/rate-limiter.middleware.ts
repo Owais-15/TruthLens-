@@ -40,7 +40,7 @@ export const verificationLimiter = async (req: Request, res: Response, next: Nex
             });
         }
 
-        next();
+        return next();
     } catch (error) {
         console.error('Rate limiter error:', error);
         return res.status(500).json({ error: 'Internal server error' });

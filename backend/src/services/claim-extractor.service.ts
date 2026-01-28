@@ -71,17 +71,73 @@ Extract all atomic claims now:`;
                     throw new Error('Invalid claim extraction response format');
                 }
 
-                return parsed.claims.map((claim: any) => ({
-                    text: claim.text || '',
-                    type: claim.type || 'factual',
-                    startIndex: claim.startIndex || 0,
-                    endIndex: claim.endIndex || 0,
-                }));
+                return parsed.claims.map((claim: any) => {
+                    // Snap indices to full sentences for better highlighting
+                    const indices = this.snapToSentence(text, claim.startIndex || 0, claim.endIndex || 0);
+                    return {
+                        text: claim.text || '',
+                        type: claim.type || 'factual',
+                        startIndex: indices.start,
+                        endIndex: indices.end,
+                    };
+                });
             } catch (error) {
                 console.error('Claim extraction error:', error);
                 throw error; // Let RateLimitHandler handle retries
             }
         });
+    }
+
+    /**
+     * Snap start/end indices to the nearest sentence boundaries
+     */
+    private static snapToSentence(text: string, start: number, end: number): { start: number, end: number } {
+        if (!text || start < 0 || end > text.length) {
+            return { start, end };
+        }
+
+        // Find start of sentence (look backwards for punctuation or start of string)
+        let newStart = start;
+        // Search backwards with a safety limit of 500 chars
+        let charsChecked = 0;
+        while (newStart > 0 && charsChecked < 500) {
+            const char = text[newStart - 1];
+            // If punctuation followed by space (or just punctuation), it's likely end of prev sentence
+            // We check for [.!?]
+            if (/[.!?]/.test(char)) {
+                // Determine if it's a real sentence break (simple heuristic: followed by space)
+                // If we are at index `start`, we want to go back to the beginning of THIS sentence.
+                // The PREVIOUS sentence ended at `char`.
+                break;
+            }
+            newStart--;
+            charsChecked++;
+        }
+
+        // Trim leading whitespace
+        while (newStart < text.length && /\s/.test(text[newStart])) {
+            newStart++;
+        }
+
+        // Find end of sentence (look forwards for punctuation)
+        let newEnd = end;
+        charsChecked = 0;
+        while (newEnd < text.length && charsChecked < 500) {
+            const char = text[newEnd];
+            newEnd++; // Include the character we are checking
+
+            if (/[.!?]/.test(char)) {
+                break;
+            }
+            charsChecked++;
+        }
+
+        // Validate: if expansion looks too wild (e.g. > 500 chars), revert to original
+        if (newEnd - newStart > 500) {
+            return { start, end };
+        }
+
+        return { start: newStart, end: newEnd };
     }
 
     /**

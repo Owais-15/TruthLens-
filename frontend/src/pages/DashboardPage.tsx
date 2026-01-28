@@ -15,8 +15,8 @@ export default function DashboardPage() {
         <div className="min-h-screen">
             {/* Header */}
             <header className="glass-card mx-4 mt-4 mb-6">
-                <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
                         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
                             TruthLens
                         </h1>
@@ -36,9 +36,9 @@ export default function DashboardPage() {
                         </nav>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 w-full md:w-auto justify-end">
                         {user && (
-                            <div className="text-sm text-right">
+                            <div className="text-sm text-right hidden md:block">
                                 <p className="text-text-primary font-medium">{user.name || user.email}</p>
                                 <p className="text-text-secondary text-xs">
                                     {user.verificationsUsed} / {user.verificationsLimit} verifications

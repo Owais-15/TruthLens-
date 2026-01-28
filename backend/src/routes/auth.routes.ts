@@ -116,4 +116,58 @@ router.get('/me', authenticate, async (req, res) => {
     }
 });
 
+/**
+ * PUT /api/auth/profile
+ * Update user profile
+ */
+router.put('/profile', authenticate, async (req, res) => {
+    try {
+        const { name } = req.body;
+
+        if (!name || typeof name !== 'string' || name.trim().length < 2) {
+            return res.status(400).json({ error: 'Valid name is required (min 2 chars)' });
+        }
+
+        const updatedUser = await AuthService.updateProfile(req.user!.userId, name);
+
+        // Don't send password in response
+        const { password: _, ...userWithoutPassword } = updatedUser;
+
+        res.json({ user: userWithoutPassword });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({ error: 'Failed to update profile' });
+    }
+});
+
+/**
+ * PUT /api/auth/password
+ * Change user password
+ */
+router.put('/password', authenticate, authLimiter, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Current and new password are required' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ error: 'New password must be at least 6 characters' });
+        }
+
+        await AuthService.changePassword(req.user!.userId, currentPassword, newPassword);
+
+        res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+        if (error instanceof Error) {
+            if (error.message === 'Invalid current password') {
+                return res.status(401).json({ error: error.message });
+            }
+        }
+        console.error('Change password error:', error);
+        res.status(500).json({ error: 'Failed to change password' });
+    }
+});
+
 export default router;
