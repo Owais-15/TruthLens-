@@ -63,7 +63,7 @@ export default function ClaimDetailsPanel({ claims }: ClaimDetailsPanelProps) {
                                     "{claim.claim.text}"
                                 </p>
                                 <div className="flex items-center gap-3 mt-2 text-xs text-text-secondary">
-                                    <span>Confidence: {Math.round(claim.entailment.confidence * 100)}%</span>
+                                    <span>Confidence: {Math.round(claim.entailment.confidence)}%</span>
                                     <span>•</span>
                                     <span>{claim.evidence?.length || 0} sources</span>
                                 </div>
@@ -94,12 +94,12 @@ export default function ClaimDetailsPanel({ claims }: ClaimDetailsPanelProps) {
                         <div>
                             <div className="flex justify-between text-xs text-text-secondary mb-1">
                                 <span>Confidence Level</span>
-                                <span>{Math.round(claim.entailment.confidence * 100)}%</span>
+                                <span>{Math.round(claim.entailment.confidence)}%</span>
                             </div>
                             <div className="h-2 bg-bg-tertiary rounded-full overflow-hidden">
                                 <div
                                     className={`h-full ${color.replace('border-l-', 'bg-')} transition-all duration-500`}
-                                    style={{ width: `${claim.entailment.confidence * 100}%` }}
+                                    style={{ width: `${Math.min(claim.entailment.confidence, 100)}%` }}
                                 />
                             </div>
                         </div>

@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TruthLens – Conference Presentation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:   #0a0e1a;
+      --navy2:  #111827;
+      --card:   #1a2035;
+      --border: #2a3552;
+      --cyan:   #00d4ff;
+      --blue:   #3b82f6;
+      --green:  #10b981;
+      --red:    #ef4444;
+      --yellow: #f59e0b;
+      --text:   #e2e8f0;
+      --muted:  #94a3b8;
+    }
+
+    body { font-family: 'Inter', sans-serif; background: var(--navy); color: var(--text); overflow: hidden; }
+
+    /* ── Slide Container ── */
+    .deck { width: 100vw; height: 100vh; }
+    .slide {
+      display: none; width: 100%; height: 100%;
+      padding: 60px 80px;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .slide.active { display: flex; }
+    .slide::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 80% 50%, rgba(59,130,246,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Typography ── */
+    .eyebrow {
+      font-size: 12px; font-weight: 600; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--cyan);
+      margin-bottom: 16px;
+    }
+    h1 { font-size: 56px; font-weight: 900; line-height: 1.05; margin-bottom: 24px; }
+    h1 span { background: linear-gradient(135deg, var(--cyan), var(--blue)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    h2 { font-size: 40px; font-weight: 800; margin-bottom: 8px; }
+    h2 span { color: var(--cyan); }
+    .slide-sub { font-size: 18px; color: var(--muted); margin-bottom: 40px; font-weight: 400; }
+    p { font-size: 16px; line-height: 1.7; color: var(--muted); }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 32px;
+    }
+    .card-grid { display: grid; gap: 20px; }
+    .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .card-grid.cols-4 { grid-template-columns: repeat(4,1fr); }
+
+    .card h3 { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+    .card p  { font-size: 14px; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block; padding: 4px 12px; border-radius: 999px;
+      font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+    }
+    .badge-cyan  { background: rgba(0,212,255,.15); color: var(--cyan); }
+    .badge-green { background: rgba(16,185,129,.15); color: var(--green); }
+    .badge-red   { background: rgba(239,68,68,.15);  color: var(--red); }
+    .badge-yellow{ background: rgba(245,158,11,.15); color: var(--yellow); }
+
+    /* ── Highlights ── */
+    .hl-green  { background: rgba(16,185,129,.25); border-bottom: 2px solid var(--green); border-radius: 3px; padding: 0 2px; color: #d1fae5; }
+    .hl-red    { background: rgba(239,68,68,.25);  border-bottom: 2px solid var(--red);   border-radius: 3px; padding: 0 2px; color: #fecaca; }
+    .hl-yellow { background: rgba(245,158,11,.25); border-bottom: 2px solid var(--yellow);border-radius: 3px; padding: 0 2px; color: #fef3c7; }
+
+    /* ── Trust Score ── */
+    .score-ring {
+      width: 110px; height: 110px; border-radius: 50%;
+      background: conic-gradient(var(--yellow) 0% 60%, var(--card) 60% 100%);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 30px rgba(245,158,11,.25);
+    }
+    .score-inner {
+      width: 82px; height: 82px; border-radius: 50%; background: var(--card);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column;
+    }
+    .score-inner .num  { font-size: 26px; font-weight: 900; color: var(--yellow); }
+    .score-inner .lbl  { font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* ── Progress bars ── */
+    .prog { background: var(--border); border-radius: 99px; height: 8px; overflow: hidden; margin-top: 8px; }
+    .prog span { display: block; height: 100%; border-radius: 99px; }
+
+    /* ── Stats Row ── */
+    .stat { text-align: center; }
+    .stat .val { font-size: 36px; font-weight: 900; }
+    .stat .key { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* ── Accent lines ── */
+    .accent { width: 60px; height: 4px; border-radius: 99px; background: linear-gradient(90deg,var(--cyan),var(--blue)); margin-bottom: 28px; }
+
+    /* ── Pipeline steps ── */
+    .pipe-step {
+      display: flex; align-items: flex-start; gap: 20px;
+    }
+    .pipe-icon {
+      width: 46px; height: 46px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .pipe-step h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .pipe-step p  { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+    /* ── Separator arrow ── */
+    .arrow { text-align: center; font-size: 20px; color: var(--border); margin: 2px 0; }
+
+    /* ── Results table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { background: var(--border); color: var(--muted); font-weight: 600; font-size: 11px;
+         text-transform: uppercase; letter-spacing: 1px; padding: 10px 16px; text-align: left; }
+    td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    .best { font-weight: 800; color: var(--text); }
+
+    /* ── Nav ── */
+    #nav {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 16px;
+      background: rgba(26,32,53,.95); border: 1px solid var(--border);
+      border-radius: 999px; padding: 10px 24px;
+      backdrop-filter: blur(12px); z-index: 999;
+    }
+    #nav button {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 8px;
+      transition: .15s;
+    }
+    #nav button:hover { color: var(--text); background: var(--border); }
+    #slide-counter { font-size: 13px; color: var(--muted); min-width: 50px; text-align: center; }
+
+    /* ── Dot indicators ── */
+    #dots { display: flex; gap: 6px; }
+    .dot { width: 6px; height: 6px; border-radius: 99px; background: var(--border); transition: .3s; cursor: pointer; }
+    .dot.active { background: var(--cyan); width: 18px; }
+
+    /* ── Footer label ── */
+    .slide-num {
+      position: absolute; bottom: 32px; right: 80px;
+      font-size: 12px; color: var(--border); font-weight: 500;
+    }
+
+    /* ── Authors ── */
+    .author-list { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+    .author-chip {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 999px; padding: 6px 16px; font-size: 13px; color: var(--muted);
+    }
+
+    /* ── Title slide ── */
+    #s1 { background: linear-gradient(135deg, var(--navy) 0%, #0d1628 100%); }
+    #s1::after {
+      content: '';
+      position: absolute; top: -100px; right: -100px;
+      width: 500px; height: 500px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,212,255,.06) 0%, transparent 70%);
+    }
+
+    /* ── Logo ── */
+    .logo { font-size: 20px; font-weight: 800; color: var(--cyan); margin-bottom: 40px; letter-spacing: -0.5px; }
+
+    /* ── Divider ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: start; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+    .icon-big { font-size: 32px; margin-bottom: 12px; }
+
+    /* ── Roadmap ── */
+    .roadmap { display: flex; gap: 0; }
+    .rm-step { flex: 1; position: relative; text-align: center; }
+    .rm-step:not(:last-child)::after {
+      content: '→'; position: absolute; right: -12px; top: 20px;
+      color: var(--border); font-size: 18px;
+    }
+    .rm-num {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--cyan), var(--blue));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 16px; margin: 0 auto 10px;
+    }
+    .rm-step p { font-size: 12px; color: var(--muted); }
+    .rm-step h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+
+    /* ── Checklist ── */
+    .check-list { display: flex; flex-direction: column; gap: 10px; }
+    .check-item { display: flex; align-items: center; gap: 12px; font-size: 15px; }
+    .check-item span:first-child { color: var(--green); font-size: 16px; }
+  </style>
+</head>
+<body>
+<div class="deck">
+
+  <!-- ─────────── SLIDE 1: Title ─────────── -->
+  <div class="slide active" id="s1">
+    <div class="logo">⚡ TruthLens</div>
+    <div class="eyebrow">IEEE Conference Presentation · 2026</div>
+    <h1>A Real-Time <span>Neuro-Symbolic</span><br>Approach to Hallucination<br>Detection in LLMs</h1>
+    <p style="font-size:17px; max-width: 580px;">Atomising AI-generated text into verifiable claims, grounding each fact against a live evidence corpus, and returning colour-coded trust feedback — all under five seconds.</p>
+    <div class="author-list" style="margin-top:36px;">
+      <div class="author-chip">Sairaj Shinde</div>
+      <div class="author-chip">Khushi Shukla</div>
+      <div class="author-chip">Sayed Mohammad Owais Hussain</div>
+      <div class="author-chip">Minakshi Ghorpade</div>
+    </div>
+    <p style="margin-top: 14px; font-size:13px;">Dept. of Information Technology · Thakur College of Engineering &amp; Technology, University of Mumbai</p>
+    <div class="slide-num">1 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 2: The Problem ─────────── -->
+  <div class="slide" id="s2">
+    <div class="eyebrow">Motivation</div>
+    <div class="accent"></div>
+    <h2>AI Hallucinations are a <span>Critical</span> Problem</h2>
+    <p class="slide-sub">LLMs produce plausible but factually incorrect content with high confidence</p>
+    <div class="card-grid cols-3" style="margin-top: 8px;">
+      <div class="card">
+        <div class="icon-big">⚖️</div>
+        <h3 style="color:var(--red)">Legal Briefs</h3>
+        <p>Lawyers have cited non-existent court cases generated by AI models – leading to disciplinary action and case dismissals.</p>
+      </div>
+      <div class="card">
+        <div class="icon-big">🏥</div>
+        <h3 style="color:var(--red)">Medical Summaries</h3>
+        <p>Drug interaction errors and fabricated clinical trial data have appeared in AI-generated medical summaries.</p>
+      </div>
+      <div class="card">
+        <div class="icon-big">📰</div>
+        <h3 style="color:var(--red)">News & Research</h3>
+        <p>Students and journalists unknowingly use AI outputs containing fabricated statistics, dates, and citations.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top: 20px; display:flex; gap: 40px; justify-content: space-around;">
+      <div class="stat"><div class="val" style="color:var(--red)">30%+</div><div class="key">AI summaries contain hallucinated content (Maynez et al.)</div></div>
+      <div class="stat"><div class="val" style="color:var(--yellow)">58%</div><div class="key">Top model truthfulness on TruthfulQA (Lin et al.)</div></div>
+      <div class="stat"><div class="val" style="color:var(--cyan)">0</div><div class="key">Accessible real-time verification tools for end users</div></div>
+    </div>
+    <div class="slide-num">2 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 3: Gap & Solution ─────────── -->
+  <div class="slide" id="s3">
+    <div class="eyebrow">Contribution</div>
+    <div class="accent"></div>
+    <h2>Existing Solutions Have a <span>Critical Gap</span></h2>
+    <p class="slide-sub">Research tools require expertise. Enterprise tools cost money. Users get nothing.</p>
+    <div class="two-col" style="margin-top: 20px; align-items: center;">
+      <div>
+        <div class="card-grid" style="gap:12px;">
+          <div class="card" style="border-color: var(--red);">
+            <div class="badge badge-red" style="margin-bottom:10px;">Gap 1</div>
+            <h3>Post-generation Focus</h3>
+            <p>Most tools evaluate model output quality, not verify existing AI-generated text users receive from others.</p>
+          </div>
+          <div class="card" style="border-color: var(--red);">
+            <div class="badge badge-red" style="margin-bottom:10px;">Gap 2</div>
+            <h3>Accessibility Barriers</h3>
+            <p>Research-grade tools require ML expertise. Commercial solutions have cost barriers excluding students and journalists.</p>
+          </div>
+          <div class="card" style="border-color: var(--red);">
+            <div class="badge badge-red" style="margin-bottom:10px;">Gap 3</div>
+            <h3>Latency Constraints</h3>
+            <p>SelfCheckGPT requires 10–20 samples (avg. 15.4s). Incompatible with interactive workflows.</p>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="border-color: var(--cyan); padding: 36px;">
+        <div class="badge badge-cyan" style="margin-bottom:16px;">TruthLens Solution</div>
+        <h3 style="font-size: 20px; margin-bottom: 16px;">A browser-accessible, real-time Neuro-Symbolic verification assistant</h3>
+        <div class="check-list">
+          <div class="check-item"><span>✓</span> Works on ANY AI-generated text (post-hoc)</div>
+          <div class="check-item"><span>✓</span> Free browser-based access – no ML expertise required</div>
+          <div class="check-item"><span>✓</span> Sub-5-second response time (avg. 3.8s)</div>
+          <div class="check-item"><span>✓</span> Evidence citations for every claim</div>
+          <div class="check-item"><span>✓</span> 96% precision, outperforming all baselines</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">3 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 4: Architecture ─────────── -->
+  <div class="slide" id="s4">
+    <div class="eyebrow">System Design</div>
+    <div class="accent"></div>
+    <h2>Neuro-<span>Symbolic</span> Architecture</h2>
+    <p class="slide-sub">Neural language understanding + Deterministic fact retrieval</p>
+    <div class="two-col" style="margin-top:16px; gap: 40px;">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div class="pipe-step">
+          <div class="pipe-icon" style="background:rgba(59,130,246,.15); color: var(--blue);">📝</div>
+          <div>
+            <h3>Stage 1 · Atomic Claim Extraction</h3>
+            <p>Llama-3.1-8b (via Groq LPU) breaks input into isolated, falsifiable claims with character-level indices. Structured system prompting with JSON output.</p>
+          </div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="pipe-step">
+          <div class="pipe-icon" style="background:rgba(0,212,255,.12); color: var(--cyan);">🔍</div>
+          <div>
+            <h3>Stage 2 · Semantic Evidence Retrieval</h3>
+            <p>Exa Neural Search API converts each claim to a dense-vector query and retrieves top-5 high-authority documents from a 10M+ document index.</p>
+          </div>
+        </div>
+        <div class="arrow">↓</div>
+        <div class="pipe-step">
+          <div class="pipe-icon" style="background:rgba(16,185,129,.15); color: var(--green);">🧠</div>
+          <div>
+            <h3>Stage 3 · Entailment Classification</h3>
+            <p>Llama-3.1-8b acts as an NLI system, performing cross-attention between claim and evidence to classify: Entailment / Contradiction / Neutral.</p>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card">
+          <h3 style="color:var(--cyan); margin-bottom:12px;">Tech Stack</h3>
+          <div style="display:flex; flex-wrap:wrap; gap: 8px;">
+            <span class="badge badge-cyan">React + TypeScript</span>
+            <span class="badge badge-cyan">Node.js + Express</span>
+            <span class="badge badge-cyan">PostgreSQL + Drizzle ORM</span>
+            <span class="badge badge-cyan">Groq LPU Inference</span>
+            <span class="badge badge-cyan">Llama-3.1-8b-instant</span>
+            <span class="badge badge-cyan">Exa Neural Search</span>
+            <span class="badge badge-cyan">Redis Caching</span>
+            <span class="badge badge-cyan">JWT Auth</span>
+            <span class="badge badge-cyan">Tailwind CSS</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:12px;">Mathematical Formulation</h3>
+          <p style="font-size: 13px; font-family: monospace; line-height: 2; color: var(--text);">
+            f: T → {(tᵢ, lᵢ, sᵢ, eᵢ)}<br>
+            P(y | cⱼ, Eⱼ), y ∈ {entailment, contradiction, neutral}<br>
+            τ(T) = Σ wⱼ · 𝟙(P(ent|cⱼ,Eⱼ) > δ) / Σ wⱼ  <span style="color:var(--muted)">δ=0.7</span>
+          </p>
+        </div>
+        <div class="card" style="background: rgba(0,212,255,.04); border-color: rgba(0,212,255,.2);">
+          <h3 style="margin-bottom:8px;">Security & Performance</h3>
+          <p style="font-size:13px;">JWT auth · 100 req / 15min rate limit · AES-256 encryption · Redis caching (24h claims, 1h evidence) · GDPR compliant</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">4 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 5: Live Demo Preview ─────────── -->
+  <div class="slide" id="s5">
+    <div class="eyebrow">Live Demo</div>
+    <div class="accent"></div>
+    <h2>See <span>TruthLens</span> in Action</h2>
+    <p class="slide-sub">Real verification on text with intentional errors</p>
+    <div class="two-col" style="margin-top: 16px; gap: 32px; align-items: start;">
+      <div>
+        <div class="card" style="margin-bottom: 16px;">
+          <p style="font-size: 13px; color: var(--muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:1px; font-weight:600;">Input Text</p>
+          <p style="font-size: 15px; line-height: 1.8;">
+            <span class="hl-green">The Eiffel Tower was built in 1887</span>
+            and <span class="hl-red">stands 330 meters tall.</span>
+            <span class="hl-yellow">It is located in London, England.</span>
+          </p>
+          <div style="display:flex; gap:16px; margin-top:14px; font-size:12px;">
+            <span style="color:var(--green)">■ Verified</span>
+            <span style="color:var(--red)">■ Contradicted</span>
+            <span style="color:var(--yellow)">■ Unverified</span>
+          </div>
+        </div>
+        <div class="card">
+          <p style="font-size: 13px; color: var(--muted); margin-bottom:12px; text-transform:uppercase; letter-spacing:1px; font-weight:600;">Claim Breakdown</p>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px;">
+              <span style="color:var(--green); font-size:16px;">✓</span>
+              <span style="flex:1">"Built in 1887" — construction began 28 Jan 1887</span>
+              <span class="badge badge-green">90% conf.</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px;">
+              <span style="color:var(--red); font-size:16px;">✗</span>
+              <span style="flex:1">"330 meters tall" — core structure is ~300m</span>
+              <span class="badge badge-red">90% conf.</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px; font-size:14px;">
+              <span style="color:var(--yellow); font-size:18px;">△</span>
+              <span style="flex:1">"London, England" — insufficient indexed evidence</span>
+              <span class="badge badge-yellow">Low conf.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap: 16px; align-items: center; padding-top: 16px;">
+        <div class="score-ring" style="width:140px; height:140px; background: conic-gradient(var(--yellow) 0% 60%, var(--card) 60% 100%);">
+          <div class="score-inner" style="width:105px; height:105px;">
+            <span class="num" style="font-size:32px;">60</span>
+            <span class="lbl">Trust Score</span>
+          </div>
+        </div>
+        <p style="font-size:13px; color:var(--yellow); font-weight:600;">Medium Trust</p>
+        <div class="card" style="width:100%;">
+          <h3 style="font-size:13px; margin-bottom:12px;">Claim Distribution</h3>
+          <div style="display:flex; height:10px; border-radius:99px; overflow:hidden; margin-bottom:8px;">
+            <div style="width:33%;background:var(--green)"></div>
+            <div style="width:34%;background:var(--red)"></div>
+            <div style="width:33%;background:var(--yellow)"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:12px;">
+            <span style="color:var(--green)">✓ 33%</span>
+            <span style="color:var(--red)">✗ 33%</span>
+            <span style="color:var(--yellow)">△ 33%</span>
+          </div>
+        </div>
+        <div class="card" style="width:100%;">
+          <h3 style="font-size:13px; margin-bottom:12px;">Performance</h3>
+          <div style="display:flex; justify-content:space-between; font-size:14px;">
+            <span style="color:var(--muted)">Processing Time</span>
+            <span style="color:var(--cyan); font-weight:700;">256 ms</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:8px;">
+            <span style="color:var(--muted)">Claims Extracted</span>
+            <span style="color:var(--cyan); font-weight:700;">3</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:8px;">
+            <span style="color:var(--muted)">Evidence Sources</span>
+            <span style="color:var(--cyan); font-weight:700;">5 per claim</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">5 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 6: Experimental Setup ─────────── -->
+  <div class="slide" id="s6">
+    <div class="eyebrow">Evaluation</div>
+    <div class="accent"></div>
+    <h2>Experimental <span>Setup</span></h2>
+    <p class="slide-sub">Three-component evaluation dataset testing precision, recall, and latency</p>
+    <div class="card-grid cols-3" style="margin-top: 16px;">
+      <div class="card" style="border-top: 3px solid var(--blue);">
+        <div class="badge badge-cyan" style="margin-bottom:12px;">Dataset 1</div>
+        <h3>TruthfulQA Subset</h3>
+        <p style="margin-top:8px; font-size:14px;"><strong style="color:var(--text);">100 questions</strong> known to provoke imitative falsehoods. GPT-4 and Claude-3 responses used as the verification corpus.</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--cyan);">
+        <div class="badge badge-cyan" style="margin-bottom:12px;">Dataset 2</div>
+        <h3>Adversarial Perturbations</h3>
+        <p style="margin-top:8px; font-size:14px;"><strong style="color:var(--text);">50 Wikipedia articles</strong> manually corrupted with subtle errors:<br>• Temporal shifts (wrong years)<br>• Entity substitutions<br>• Numerical alterations (±10–20%)</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--yellow);">
+        <div class="badge badge-yellow" style="margin-bottom:12px;">Dataset 3</div>
+        <h3>Subjective Statements</h3>
+        <p style="margin-top:8px; font-size:14px;"><strong style="color:var(--text);">20 opinion-based sentences</strong> testing the system's ability to correctly classify non-verifiable content as "unverifiable" without false-flagging opinions.</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <h3 style="margin-bottom:14px;">Baseline Systems Compared</h3>
+      <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+        <div><strong style="color:var(--text); font-size:14px;">GPT-4 Direct Query</strong><p style="font-size:13px;">Asking GPT-4 if the statement is true without external verification resources</p></div>
+        <div><strong style="color:var(--text); font-size:14px;">SelfCheckGPT</strong><p style="font-size:13px;">Stochastic sampling with 10 samples per query (Manakul et al., EMNLP 2023)</p></div>
+        <div><strong style="color:var(--text); font-size:14px;">Keyword Search Baseline</strong><p style="font-size:13px;">Naive keyword-based search with simple string matching</p></div>
+      </div>
+    </div>
+    <div class="slide-num">6 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 7: Results ─────────── -->
+  <div class="slide" id="s7">
+    <div class="eyebrow">Results</div>
+    <div class="accent"></div>
+    <h2>Quantitative <span>Results</span></h2>
+    <p class="slide-sub">TruthLens achieves highest precision while maintaining interactive latency</p>
+    <div class="two-col" style="margin-top:16px; gap: 32px;">
+      <div>
+        <table>
+          <thead>
+            <tr><th>System</th><th>Precision</th><th>Recall</th><th>F1</th><th>Latency</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>GPT-4 Direct</td><td>0.82</td><td>0.78</td><td>0.80</td><td>2.1s</td></tr>
+            <tr><td>Keyword Search</td><td>0.71</td><td>0.85</td><td>0.77</td><td>1.8s</td></tr>
+            <tr><td>SelfCheckGPT</td><td>0.89</td><td>0.92</td><td>0.90</td><td>15.4s</td></tr>
+            <tr style="background: rgba(0,212,255,.06);">
+              <td class="best">🏆 TruthLens</td>
+              <td class="best" style="color:var(--green)">0.96</td>
+              <td class="best">0.91</td>
+              <td class="best" style="color:var(--green)">0.93</td>
+              <td class="best" style="color:var(--cyan)">3.8s</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="card" style="margin-top:16px;">
+          <h3 style="color:var(--green); margin-bottom:12px;">Key Achievement</h3>
+          <p style="font-size:14px;">TruthLens is <strong style="color:var(--text);">75% faster</strong> than SelfCheckGPT while delivering <strong style="color:var(--text);">+7% better precision</strong>. The evidence-based approach ensures only statements contradicted by external evidence are flagged.</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="card">
+          <h3 style="margin-bottom:12px;">Field Error Analysis</h3>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span>Temporal Coverage Gap (recent events)</span><span style="color:var(--red)">18%</span></div>
+              <div class="prog"><span style="width:18%; background:var(--red)"></span></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span>Complex Multi-hop Reasoning</span><span style="color:var(--yellow)">12%</span></div>
+              <div class="prog"><span style="width:12%; background:var(--yellow)"></span></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span>Ambiguous Phrasing</span><span style="color:var(--blue)">8%</span></div>
+              <div class="prog"><span style="width:8%; background:var(--blue)"></span></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span>Domain-Specific Technical Claims</span><span style="color:var(--muted)">5%</span></div>
+              <div class="prog"><span style="width:5%; background:var(--muted)"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-grid cols-2" style="gap:12px;">
+          <div class="card" style="text-align:center; padding: 20px;">
+            <div style="font-size:32px; font-weight:900; color:var(--green)">96%</div>
+            <div style="font-size:12px; color:var(--muted); margin-top:4px;">Precision</div>
+          </div>
+          <div class="card" style="text-align:center; padding: 20px;">
+            <div style="font-size:32px; font-weight:900; color:var(--cyan)">3.8s</div>
+            <div style="font-size:12px; color:var(--muted); margin-top:4px;">Avg. Latency</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">7 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 8: Case Studies ─────────── -->
+  <div class="slide" id="s8">
+    <div class="eyebrow">Real-World Validation</div>
+    <div class="accent"></div>
+    <h2>Three Real-World <span>Case Studies</span></h2>
+    <p class="slide-sub">Demonstrating practical impact across education, journalism, and research</p>
+    <div class="card-grid cols-3" style="margin-top:16px;">
+      <div class="card" style="border-top: 3px solid var(--blue);">
+        <div class="badge badge-cyan" style="margin-bottom:10px;">Case Study 1</div>
+        <h3>📚 Academic Research</h3>
+        <p style="margin-top:8px; font-size:14px;">20 AI-generated summaries of research papers.<br><br>
+        <strong style="color:var(--text)">47 factual errors</strong> detected:<br>
+        • 18 wrong publication years<br>
+        • 12 misattributed authorship<br>
+        • 11 numerical errors<br>
+        • 6 fabricated experiments<br><br>
+        <strong style="color:var(--green)">94% agreement</strong> with expert verification</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--cyan);">
+        <div class="badge badge-cyan" style="margin-bottom:10px;">Case Study 2</div>
+        <h3>📰 Journalism Fact-Check</h3>
+        <p style="margin-top:8px; font-size:14px;">5 AI-drafted news articles (500–800 words each) pre-publication.<br><br>
+        <strong style="color:var(--text)">23 flags raised:</strong><br>
+        • 8 verified errors corrected<br>
+        • 11 unverifiable claims flagged<br>
+        • 4 false positives (recent events)<br><br>
+        Journalists reported <strong style="color:var(--green)">60% reduction</strong> in fact-checking time</p>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--yellow);">
+        <div class="badge badge-yellow" style="margin-bottom:10px;">Case Study 3</div>
+        <h3>🎓 Educational Content</h3>
+        <p style="margin-top:8px; font-size:14px;">127 student-submitted AI study guides over 2 weeks.<br><br>
+        <strong style="color:var(--text)">144 errors found:</strong><br>
+        • 89 wrong time complexity claims<br>
+        • 34 faulty algorithm attributions<br>
+        • 21 fabricated examples<br><br>
+        Students scored <strong style="color:var(--green)">8.3% better</strong> on factual recall questions</p>
+      </div>
+    </div>
+    <div class="card" style="margin-top:20px; background: rgba(16,185,129,.04); border-color: rgba(16,185,129,.2);">
+      <div style="display: flex; align-items:center; gap: 40px; justify-content: space-around;">
+        <div class="stat"><div class="val" style="color:var(--green)">4.6/5</div><div class="key">Explainability rating</div></div>
+        <div class="stat"><div class="val" style="color:var(--green)">4.4/5</div><div class="key">Actionability rating</div></div>
+        <div class="stat"><div class="val" style="color:var(--green)">4.2/5</div><div class="key">User trust rating</div></div>
+        <div class="stat"><div class="val" style="color:var(--cyan)">15</div><div class="key">Undergraduate participants</div></div>
+      </div>
+    </div>
+    <div class="slide-num">8 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 9: Security ─────────── -->
+  <div class="slide" id="s9">
+    <div class="eyebrow">Security & Trust</div>
+    <div class="accent"></div>
+    <h2>Robust <span>Security Architecture</span></h2>
+    <p class="slide-sub">Multi-layer protection against technical and adversarial threats</p>
+    <div class="card-grid cols-2" style="margin-top:16px; gap: 20px;">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card">
+          <h3 style="margin-bottom:10px;">🔐 Authentication</h3>
+          <p style="font-size:14px;">Stateless JWT authentication with <strong style="color:var(--text)">15-min access tokens</strong> + <strong style="color:var(--text)">7-day refresh tokens</strong>. Role-Based Access Control (Free / Premium / Enterprise) with monthly verification quotas.</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:10px;">🚦 Rate Limiting</h3>
+          <p style="font-size:14px;">Window-based algorithm strictly enforcing <strong style="color:var(--text)">100 requests / 15 minutes</strong> per user. Adaptive throttling for suspicious patterns.</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="card">
+          <h3 style="margin-bottom:10px;">🛡️ Adversarial Threat Mitigation</h3>
+          <div style="display:flex; flex-direction:column; gap:8px; font-size:14px; margin-top:6px;">
+            <div><strong style="color:var(--text)">Evidence Poisoning</strong>: Requires ≥2 independent sources from different domains before marking a claim verified.</div>
+            <div><strong style="color:var(--text)">Prompt Injection</strong>: Strict JSON schema validation. User input sanitised before LLM calls.</div>
+            <div><strong style="color:var(--text)">DoS Attacks</strong>: Hard 5,000-character limit + cooldown periods for complex requests.</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:10px;">🔒 Privacy & Compliance</h3>
+          <p style="font-size:14px;">Ephemeral in-memory processing by default. AES-256 encryption at rest. TLS 1.3 in transit. <strong style="color:var(--text)">GDPR-compliant</strong> with 24-hour deletion guarantee.</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">9 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 10: Scalability ─────────── -->
+  <div class="slide" id="s10">
+    <div class="eyebrow">Infrastructure</div>
+    <div class="accent"></div>
+    <h2>Horizontal <span>Scalability</span> Design</h2>
+    <p class="slide-sub">Production-ready microservices with cost optimisation built in</p>
+    <div class="two-col" style="margin-top:16px;">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card">
+          <h3 style="margin-bottom:10px;">☁️ Stateless Microservices</h3>
+          <p style="font-size:14px;">Node.js services containerised with Docker, orchestrated via Kubernetes. Auto-scales based on CPU/memory. PostgreSQL primary-replica with 3 read nodes.</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:10px;">⚡ Redis Caching Layer</h3>
+          <p style="font-size:14px;"><strong style="color:var(--text)">Claims</strong>: 24-hour TTL (key: SHA-256 of input text)<br><strong style="color:var(--text)">Evidence</strong>: 1-hour TTL (key: SHA-256 of search query)<br>34% cache hit ratio reduces API costs significantly.</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:10px;">📊 Monitoring</h3>
+          <p style="font-size:14px;">OpenTelemetry distributed tracing across microservices. Auto-alerts when error rate &gt;2% or latency &gt;6s.</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div class="card" style="background:rgba(0,212,255,.04); border-color:rgba(0,212,255,.2);">
+          <h3 style="margin-bottom:14px;">💰 API Cost Optimisation</h3>
+          <div style="display:flex; flex-direction:column; gap:10px; font-size:14px;">
+            <div style="display:flex; gap:12px; align-items:start;">
+              <span style="color:var(--cyan); font-size:18px;">1.</span>
+              <span><strong style="color:var(--text)">Intelligent Claim Batching</strong> — Deduplicates similar claims, reducing API calls by grouping semantically equivalent queries.</span>
+            </div>
+            <div style="display:flex; gap:12px; align-items:start;">
+              <span style="color:var(--cyan); font-size:18px;">2.</span>
+              <span><strong style="color:var(--text)">Local Knowledge Base</strong> — 10,000 common facts (e.g., "Paris is the capital of France") verified locally without API calls.</span>
+            </div>
+            <div style="display:flex; gap:12px; align-items:start;">
+              <span style="color:var(--cyan); font-size:18px;">3.</span>
+              <span><strong style="color:var(--text)">Progressive Verification</strong> — Two-phase approach: fast Phase 1, thorough Phase 2 only if needed. Reduces average API calls by 40%.</span>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="text-align:center; padding: 32px;">
+          <div style="font-size:40px; font-weight:900; color:var(--cyan)">40%</div>
+          <div style="color:var(--muted); font-size:14px; margin-top:6px;">Reduction in average API calls via progressive verification</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">10 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 11: Future Work ─────────── -->
+  <div class="slide" id="s11">
+    <div class="eyebrow">Future Directions</div>
+    <div class="accent"></div>
+    <h2>Future <span>Research</span> Directions</h2>
+    <p class="slide-sub">Four primary research trajectories to extend TruthLens capabilities</p>
+    <div class="card-grid cols-2" style="margin-top:20px; gap: 20px;">
+      <div class="card">
+        <div class="badge badge-cyan" style="margin-bottom:12px;">Direction 1</div>
+        <h3>🖼️ Multimodal Extension</h3>
+        <p style="margin-top:8px;">Extend the verification pipeline to include image and video content. Address visual hallucinations in generated media (e.g., anatomically incorrect figures in medical illustrations).</p>
+      </div>
+      <div class="card">
+        <div class="badge badge-cyan" style="margin-bottom:12px;">Direction 2</div>
+        <h3>🏥 Domain Specialisation</h3>
+        <p style="margin-top:8px;">Build specialised TruthLens variants for high-stakes domains:<br>• <strong style="color:var(--text)">TruthLens-Med</strong> (clinical evidence)<br>• <strong style="color:var(--text)">TruthLens-Legal</strong> (case law)<br>• <strong style="color:var(--text)">TruthLens-Finance</strong> (regulatory data)</p>
+      </div>
+      <div class="card">
+        <div class="badge badge-cyan" style="margin-bottom:12px;">Direction 3</div>
+        <h3>🔄 Continuous Learning</h3>
+        <p style="margin-top:8px;">User-feedback integration loop where corrections improve both the claim extraction prompts and the evidence retrieval—creating a self-improving verification ecosystem over time.</p>
+      </div>
+      <div class="card">
+        <div class="badge badge-cyan" style="margin-bottom:12px;">Direction 4</div>
+        <h3>🌍 Multilingual Support</h3>
+        <p style="margin-top:8px;">Extend to non-English languages with language-specific claim extraction prompts and regional evidence corpora, expanding the addressable user base globally.</p>
+      </div>
+    </div>
+    <div class="slide-num">11 / 12</div>
+  </div>
+
+  <!-- ─────────── SLIDE 12: Conclusion ─────────── -->
+  <div class="slide" id="s12">
+    <div class="eyebrow">Conclusion</div>
+    <div class="accent"></div>
+    <h2>Key <span>Takeaways</span></h2>
+    <p class="slide-sub">TruthLens demonstrates that rigorous verification and interactive performance are not mutually exclusive</p>
+    <div class="two-col" style="margin-top:20px; gap: 40px; align-items: center;">
+      <div>
+        <div class="check-list" style="gap:14px;">
+          <div class="check-item" style="font-size:16px;"><span>✓</span> <strong>Neuro-Symbolic architecture</strong> outperforms purely neural baselines for factual verification tasks</div>
+          <div class="check-item" style="font-size:16px;"><span>✓</span> <strong>96% precision</strong> with only 3.8s latency — viable for real-time interactive workflows</div>
+          <div class="check-item" style="font-size:16px;"><span>✓</span> <strong>Atomic claim decomposition</strong> is essential — without it, co-located facts mask adjacent fabrications</div>
+          <div class="check-item" style="font-size:16px;"><span>✓</span> <strong>External grounding</strong> consistently outperforms self-consistency checking for factual verification</div>
+          <div class="check-item" style="font-size:16px;"><span>✓</span> <strong>Explainability</strong> drives trust — users rate evidence-backed corrections 4.6/5 (vs. black-box flags)</div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px; align-items:center;">
+        <div class="card" style="width:100%; text-align:center; padding:32px; background:rgba(0,212,255,.04); border-color:rgba(0,212,255,.3);">
+          <div style="font-size: 48px; margin-bottom:12px;">⚡</div>
+          <div class="logo" style="font-size: 28px; margin-bottom: 8px;">TruthLens</div>
+          <p style="font-size:14px; margin-bottom: 16px;">Try it live at</p>
+          <div style="font-size:16px; color:var(--cyan); font-weight:700; word-break:break-all;">truthlens-green.vercel.app</div>
+        </div>
+        <div class="card" style="width:100%;">
+          <h3 style="font-size:13px; margin-bottom:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Key References</h3>
+          <div style="font-size:12px; color:var(--muted); line-height:1.8;">
+            [1] Maynez et al. — ACL 2020<br>
+            [2] Lin et al. — TruthfulQA, ACL 2022<br>
+            [3] Min et al. — FActScore, EMNLP 2023<br>
+            [4] Manakul et al. — SelfCheckGPT, EMNLP 2023<br>
+            [7] Lewis et al. — RAG, NeurIPS 2020
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-num">12 / 12</div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- ── Navigation ── -->
+<div id="nav">
+  <button onclick="go(-1)">←</button>
+  <div id="dots"></div>
+  <span id="slide-counter">1 / 12</span>
+  <button onclick="go(1)">→</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('slide-counter');
+  const dotsEl  = document.getElementById('dots');
+  let cur = 0;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    dotsEl.children[cur].classList.remove('active');
+    cur = (n + slides.length) % slides.length;
+    slides[cur].classList.add('active');
+    dotsEl.children[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${slides.length}`;
+  }
+  function go(d) { goTo(cur + d); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') go(1);
+    if (e.key === 'ArrowLeft') go(-1);
+  });
+</script>
+</body>
+</html>

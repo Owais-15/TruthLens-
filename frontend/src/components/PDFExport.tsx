@@ -158,7 +158,7 @@ export default function PDFExport({ originalText, trustScore, claims, summary, p
                 doc.text(reasoningLines, 22, yPosition);
                 yPosition += (reasoningLines.length * 4) + 2;
 
-                doc.text(`Confidence: ${Math.round(claim.entailment.confidence * 100)}%`, 22, yPosition);
+                doc.text(`Confidence: ${Math.round(claim.entailment.confidence)}%`, 22, yPosition);
                 yPosition += 4;
 
                 if (claim.evidence && claim.evidence.length > 0) {
