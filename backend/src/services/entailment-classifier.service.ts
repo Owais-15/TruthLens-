@@ -34,7 +34,7 @@ export class EntailmentClassifierService {
                     .map((e, idx) => `[Source ${idx + 1}] ${e.title}\n${e.snippet}\nURL: ${e.url}`)
                     .join('\n\n');
 
-                const prompt = `You are a highly accurate Natural Language Inference (NLI) judge. Your job is to determine if a CLAIM is supported, contradicted, or unverifiable based on EVIDENCE and your general world knowledge.
+                const prompt = `You are a highly accurate Natural Language Inference (NLI) judge. Your job is to determine if a CLAIM is supported, contradicted, or unverifiable based on EVIDENCE.
 
 CLAIM:
 """
@@ -46,46 +46,36 @@ EVIDENCE (from web search):
 ${evidenceContext}
 """
 
-STEP-BY-STEP ANALYSIS - follow these steps carefully:
+STEP-BY-STEP ANALYSIS:
 
-STEP 1 - Extract key facts from the CLAIM:
-  - Identify all specific entities (people, places, organizations)
-  - Identify all numbers, dates, measurements
-  - Identify all relationships stated
+STEP 1 - Extract key facts:
+  - What exact numbers, dates, locations, and names are in the CLAIM?
 
-STEP 2 - Check each fact against EVIDENCE and WORLD KNOWLEDGE:
-  - Does the evidence explicitly confirm the fact?
-  - Does the evidence explicitly contradict the fact?
-  - Is the fact a well-known fact you know is wrong (e.g., Paris is NOT in England)?
+STEP 2 - Compare with EVIDENCE:
+  - Does the evidence confirm these exact facts?
+  - Does the evidence explicitly state DIFFERENT facts (e.g. claim says 1889, evidence says 1822)?
 
-STEP 3 - Apply these classification rules:
+STEP 3 - Apply strict classification rules:
 
-**CONTRADICTION** - Use this when ANY of the following:
-  - Evidence states a different date/number/measurement than the claim
-  - Evidence states a different location/country/city than the claim  
-  - Evidence states a different person/organization than the claim
-  - The claim states a geographic fact that is clearly wrong (e.g., "Eiffel Tower is in London" - it's in Paris)
-  - The claim states a historical fact that is clearly wrong
-  - Confidence: 75-99%
+**CONTRADICTION** (Only use for undeniable factual conflicts):
+  - The evidence MUST state a fact that makes the claim mathematically or historically impossible.
+  - Examples of CONTRADICTION: Different dates, different numbers, different cities for the same event.
+  - DO NOT flag as contradiction if the evidence is just missing a detail. Missing details are NEUTRAL.
+  - DO NOT flag as contradiction for minor phrasing differences (e.g. "standing proudly" vs "located").
 
-**ENTAILMENT** - Use this when:
-  - Evidence explicitly confirms the specific facts stated in the claim
-  - Multiple sources agree with the claim
-  - Confidence: 75-99%
+**ENTAILMENT** (Supported):
+  - The evidence confirms the core facts (names, dates, numbers) of the claim.
+  - It does not need to use the exact same words, but the facts must align perfectly.
 
-**NEUTRAL** - ONLY use this when:
-  - The evidence genuinely doesn't mention the specific topic at all
-  - AND you have no general world knowledge to classify it
-  - Confidence: 0-74%
-  - NOTE: If the claim contains an obviously wrong geographic or historical fact, use CONTRADICTION not NEUTRAL
-
-IMPORTANT: Geographic facts like "The Eiffel Tower is in London" are CONTRADICTIONS (it's in Paris, France). Use your world knowledge!
+**NEUTRAL** (Unverified):
+  - The evidence is discussing something else entirely.
+  - The evidence mentions the topic but does not contain the specific fact (date/number) to verify the claim.
 
 OUTPUT FORMAT (JSON only, no other text):
 {
   "verdict": "entailment|contradiction|neutral",
   "confidence": 85,
-  "reasoning": "Step 1: Claim says X. Step 2: Evidence says Y / My knowledge says Z. Step 3: Therefore VERDICT because..."
+  "reasoning": "Keep this under 2 sentences. State what the claim facts are vs what the evidence facts are."
 }
 
 Classify now:`;
