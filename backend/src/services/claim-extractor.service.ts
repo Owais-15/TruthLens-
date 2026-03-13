@@ -32,25 +32,26 @@ export class ClaimExtractorService {
                     return cachedClaims;
                 }
 
-                const prompt = `You are a precise fact-checking assistant. Your task is to decompose the following text into atomic, verifiable claims.
+                const prompt = `You are a precise fact-checking assistant. Extract individual verifiable facts from the text below.
 
-INSTRUCTIONS:
-1. Extract ONLY factual assertions (not opinions, questions, or commands)
-2. Each claim must be isolated and independently verifiable
-3. Preserve the exact wording from the original text
-4. Identify the claim type: factual, numerical, temporal, causal, or comparative
-5. Provide character-level start and end indices for each claim in the original text
+RULES:
+1. Each claim must be a SINGLE atomic fact (one subject + one predicate + one object)
+2. Extract ONLY factual assertions - skip opinions, questions, commands
+3. The "text" field MUST be an EXACT substring copied from the INPUT TEXT (copy-paste word-for-word)
+4. DO NOT paraphrase or rewrite - copy the exact words from the input
+5. startIndex and endIndex are the character positions of "text" within the INPUT TEXT
+6. Claim types: factual, numerical, temporal, location, causal, or entity
 
 INPUT TEXT:
 """
 ${text}
 """
 
-OUTPUT FORMAT (JSON):
+OUTPUT FORMAT (JSON) - return ONLY this JSON, no other text:
 {
   "claims": [
     {
-      "text": "exact claim text from input",
+      "text": "exact verbatim substring from input text",
       "type": "claim type",
       "startIndex": 0,
       "endIndex": 20
@@ -58,14 +59,17 @@ OUTPUT FORMAT (JSON):
   ]
 }
 
-Extract all atomic claims now:`;
+IMPORTANT: Double-check that each "text" value is an exact copy from the input. Extract all atomic claims:`;
 
                 const modelName = process.env.GROQ_MODEL || DEFAULT_MODEL;
                 const completion = await groq.chat.completions.create({
-                    messages: [{ role: 'user', content: prompt }],
+                    messages: [
+                        { role: 'system', content: 'You are a fact-checking assistant that extracts verifiable claims from text. Always output valid JSON only.' },
+                        { role: 'user', content: prompt }
+                    ],
                     model: modelName,
-                    temperature: 0.3,
-                    max_tokens: 1500,
+                    temperature: 0.1, // Very low for deterministic extraction
+                    max_tokens: 2000,
                 });
 
                 const responseText = completion.choices[0]?.message?.content || '';
@@ -84,16 +88,22 @@ Extract all atomic claims now:`;
                     throw new Error('Invalid claim extraction response format');
                 }
 
-                const formattedClaims = parsed.claims.map((claim: any) => {
-                    // Snap indices to full sentences for better highlighting
-                    const indices = this.snapToSentence(text, claim.startIndex || 0, claim.endIndex || 0);
-                    return {
-                        text: claim.text || '',
-                        type: claim.type || 'factual',
-                        startIndex: indices.start,
-                        endIndex: indices.end,
-                    };
-                });
+                const formattedClaims = parsed.claims
+                    .map((claim: any) => {
+                        const claimText = claim.text || '';
+                        if (!claimText) return null;
+
+                        // Find exact match in original text for precise highlighting
+                        const { start, end } = this.findExactSpan(text, claimText, claim.startIndex || 0);
+
+                        return {
+                            text: claimText,
+                            type: claim.type || 'factual',
+                            startIndex: start,
+                            endIndex: end,
+                        };
+                    })
+                    .filter(Boolean) as any[];
 
                 // 3. Save to Cache (TTL: 24 hours)
                 await redisService.set(cacheKey, formattedClaims, 86400);
@@ -107,55 +117,41 @@ Extract all atomic claims now:`;
     }
 
     /**
-     * Snap start/end indices to the nearest sentence boundaries
+     * Find the exact character span of a claim text within the original text.
+     * Uses verbatim match first, then fuzzy fallback.
      */
-    private static snapToSentence(text: string, start: number, end: number): { start: number, end: number } {
-        if (!text || start < 0 || end > text.length) {
-            return { start, end };
+    private static findExactSpan(text: string, claimText: string, hintStart: number): { start: number, end: number } {
+        if (!text || !claimText) return { start: 0, end: 0 };
+
+        // 1. Try exact match near hinted position
+        const exactIdx = text.indexOf(claimText, Math.max(0, hintStart - 50));
+        if (exactIdx !== -1) {
+            return { start: exactIdx, end: exactIdx + claimText.length };
         }
 
-        // Find start of sentence (look backwards for punctuation or start of string)
-        let newStart = start;
-        // Search backwards with a safety limit of 500 chars
-        let charsChecked = 0;
-        while (newStart > 0 && charsChecked < 500) {
-            const char = text[newStart - 1];
-            // If punctuation followed by space (or just punctuation), it's likely end of prev sentence
-            // We check for [.!?]
-            if (/[.!?]/.test(char)) {
-                // Determine if it's a real sentence break (simple heuristic: followed by space)
-                // If we are at index `start`, we want to go back to the beginning of THIS sentence.
-                // The PREVIOUS sentence ended at `char`.
-                break;
-            }
-            newStart--;
-            charsChecked++;
+        // 2. Try exact match from beginning (LLM might give wrong index)
+        const exactIdxFull = text.indexOf(claimText);
+        if (exactIdxFull !== -1) {
+            return { start: exactIdxFull, end: exactIdxFull + claimText.length };
         }
 
-        // Trim leading whitespace
-        while (newStart < text.length && /\s/.test(text[newStart])) {
-            newStart++;
+        // 3. Try case-insensitive match
+        const lowerText = text.toLowerCase();
+        const lowerClaim = claimText.toLowerCase();
+        const caseIdx = lowerText.indexOf(lowerClaim);
+        if (caseIdx !== -1) {
+            return { start: caseIdx, end: caseIdx + claimText.length };
         }
 
-        // Find end of sentence (look forwards for punctuation)
-        let newEnd = end;
-        charsChecked = 0;
-        while (newEnd < text.length && charsChecked < 500) {
-            const char = text[newEnd];
-            newEnd++; // Include the character we are checking
-
-            if (/[.!?]/.test(char)) {
-                break;
-            }
-            charsChecked++;
+        // 4. Partial match fallback: find the first 5 words of claim in text
+        const firstFewWords = claimText.split(' ').slice(0, 5).join(' ');
+        const partialIdx = lowerText.indexOf(firstFewWords.toLowerCase());
+        if (partialIdx !== -1) {
+            return { start: partialIdx, end: Math.min(partialIdx + claimText.length, text.length) };
         }
 
-        // Validate: if expansion looks too wild (e.g. > 500 chars), revert to original
-        if (newEnd - newStart > 500) {
-            return { start, end };
-        }
-
-        return { start: newStart, end: newEnd };
+        // 5. Use hinted position as last resort
+        return { start: hintStart, end: Math.min(hintStart + claimText.length, text.length) };
     }
 
     /**

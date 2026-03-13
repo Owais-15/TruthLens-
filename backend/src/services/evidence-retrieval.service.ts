@@ -69,18 +69,16 @@ export class EvidenceRetrievalService {
     }
 
     /**
-     * Optimize claim text for search query
+     * Convert a claim to an optimized search query.
+     * We convert declarative statements to questions for better semantic retrieval.
      */
     private static optimizeSearchQuery(claim: string): string {
-        // Remove filler words and optimize for search
-        const fillerWords = ['the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being'];
+        // Use the claim as-is for neural search - Exa handles it well
+        // Just clean up extra whitespace
+        const cleaned = claim.trim().replace(/\s+/g, ' ');
 
-        const words = claim.toLowerCase().split(/\s+/);
-        const optimized = words
-            .filter(word => !fillerWords.includes(word) && word.length > 2)
-            .join(' ');
-
-        return optimized || claim;
+        // If claim ends with a period, remove it (search works better without)
+        return cleaned.replace(/\.$/, '');
     }
 
     /**

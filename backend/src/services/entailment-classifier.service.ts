@@ -34,68 +34,62 @@ export class EntailmentClassifierService {
                     .map((e, idx) => `[Source ${idx + 1}] ${e.title}\n${e.snippet}\nURL: ${e.url}`)
                     .join('\n\n');
 
-                const prompt = `You are an advanced Natural Language Inference (NLI) system with cross-attention capabilities.
-
-TASK: Perform semantic entailment classification using cross-attention between claim and evidence.
+                const prompt = `You are a highly accurate Natural Language Inference (NLI) judge. Your job is to determine if a CLAIM is supported, contradicted, or unverifiable based on EVIDENCE and your general world knowledge.
 
 CLAIM:
 """
 ${claim}
 """
 
-EVIDENCE:
+EVIDENCE (from web search):
 """
 ${evidenceContext}
 """
 
-CRITICAL INSTRUCTIONS:
-1. **Thorough Text Analysis**: Carefully read ALL the evidence text, not just titles or URLs
-2. **Extract Key Facts**: Look for specific facts, dates, numbers, and names mentioned in BOTH claim and evidence
-3. **Compare Facts Explicitly**: If the claim mentions a specific date/number/name, check if the evidence mentions a DIFFERENT one
-4. **Contradiction Detection**: If evidence states a DIFFERENT fact than the claim, that's a CONTRADICTION (not neutral!)
-5. **Be Precise**: Only mark as neutral if the evidence truly doesn't mention the topic at all
+STEP-BY-STEP ANALYSIS - follow these steps carefully:
 
-CLASSIFICATION RULES (CRITICAL - READ CAREFULLY):
+STEP 1 - Extract key facts from the CLAIM:
+  - Identify all specific entities (people, places, organizations)
+  - Identify all numbers, dates, measurements
+  - Identify all relationships stated
 
-**CONTRADICTION** (Most Important - Don't Miss These!):
-- Evidence contains DIFFERENT factual information than the claim
-  * Example: Claim says "built in 1822", evidence says "built in 1889" → CONTRADICTION
-  * Example: Claim says "330 meters tall", evidence says "300 meters tall" → CONTRADICTION
-  * Example: Claim says "used as sundial", evidence says "used as radio tower" → CONTRADICTION
-- Direct factual conflict with authoritative sources
-- High confidence (≥75%)
-- **IMPORTANT**: If you find ANY conflicting fact in the evidence, classify as CONTRADICTION!
+STEP 2 - Check each fact against EVIDENCE and WORLD KNOWLEDGE:
+  - Does the evidence explicitly confirm the fact?
+  - Does the evidence explicitly contradict the fact?
+  - Is the fact a well-known fact you know is wrong (e.g., Paris is NOT in England)?
 
-**ENTAILMENT**:
-- Evidence text EXPLICITLY contains information that supports the claim
-- The EXACT same facts, dates, or numbers are present in both claim and evidence
-  * Example: Claim says "built in 1889", evidence says "completed in 1889" → ENTAILMENT
-- Authoritative source confirmation
-- High confidence (≥75%)
+STEP 3 - Apply these classification rules:
 
-**NEUTRAL** (Use Sparingly!):
-- Evidence is insufficient or doesn't mention the specific topic at all
-  * The evidence is about a completely different subject
-  * The evidence is too vague or ambiguous
-- **NOT neutral if**: Evidence mentions the topic but with different facts (that's CONTRADICTION!)
-- Confidence below 75%
+**CONTRADICTION** - Use this when ANY of the following:
+  - Evidence states a different date/number/measurement than the claim
+  - Evidence states a different location/country/city than the claim  
+  - Evidence states a different person/organization than the claim
+  - The claim states a geographic fact that is clearly wrong (e.g., "Eiffel Tower is in London" - it's in Paris)
+  - The claim states a historical fact that is clearly wrong
+  - Confidence: 75-99%
 
-CONFIDENCE SCORING:
-- 90-100: Multiple sources with exact matching facts OR clear contradiction
-- 75-89: Clear support/refutation from reliable sources
-- 50-74: Partial or indirect evidence
-- 0-49: Weak or missing evidence
+**ENTAILMENT** - Use this when:
+  - Evidence explicitly confirms the specific facts stated in the claim
+  - Multiple sources agree with the claim
+  - Confidence: 75-99%
 
-**CRITICAL REMINDER**: When you see conflicting dates, numbers, or facts between claim and evidence, always classify as CONTRADICTION, not neutral!
+**NEUTRAL** - ONLY use this when:
+  - The evidence genuinely doesn't mention the specific topic at all
+  - AND you have no general world knowledge to classify it
+  - Confidence: 0-74%
+  - NOTE: If the claim contains an obviously wrong geographic or historical fact, use CONTRADICTION not NEUTRAL
 
-OUTPUT FORMAT (JSON):
+IMPORTANT: Geographic facts like "The Eiffel Tower is in London" are CONTRADICTIONS (it's in Paris, France). Use your world knowledge!
+
+OUTPUT FORMAT (JSON only, no other text):
 {
   "verdict": "entailment|contradiction|neutral",
   "confidence": 85,
-  "reasoning": "Detailed explanation citing specific facts found (or not found) in the evidence text. If contradiction, explicitly state what the claim says vs what the evidence says."
+  "reasoning": "Step 1: Claim says X. Step 2: Evidence says Y / My knowledge says Z. Step 3: Therefore VERDICT because..."
 }
 
 Classify now:`;
+
 
                 const modelName = process.env.GROQ_MODEL || DEFAULT_MODEL;
                 const completion = await groq.chat.completions.create({
