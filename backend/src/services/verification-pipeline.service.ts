@@ -85,56 +85,37 @@ export class VerificationPipelineService {
     }
 
     /**
-     * Calculate weighted aggregate trust score
-     * Implements research paper algorithm: T = (Σ w_i * I(c_i ≥ τ) * score_i) / (Σ w_i)
-     * where w_i = importance weight, I = indicator function, τ = confidence threshold
+     * Calculate aggregate trust score based on entailment verdicts and confidence.
      */
     private static calculateTrustScore(verifications: ClaimVerification[]): number {
         if (verifications.length === 0) return 0;
 
-        const { ClaimImportanceAnalyzer } = require('./claim-importance.service');
-
-        let weightedSum = 0;
-        let totalWeight = 0;
-        const CONFIDENCE_THRESHOLD = 70; // τ = 0.7 (70%)
+        let totalScore = 0;
+        let validClaims = 0;
 
         for (const verification of verifications) {
             const { verdict, confidence } = verification.entailment;
-            const claimText = verification.claim.text;
-
-            // Calculate importance weight w_i for this claim
-            const importance = ClaimImportanceAnalyzer.analyzeImportance(claimText);
-            const weight = importance.weight;
-
-            // Indicator function I(c_i ≥ τ): only count high-confidence claims fully
-            if (confidence >= CONFIDENCE_THRESHOLD) {
-                if (verdict === 'entailment') {
-                    weightedSum += weight * confidence;
-                    totalWeight += weight;
-                } else if (verdict === 'contradiction') {
-                    weightedSum -= weight * confidence;
-                    totalWeight += weight;
-                }
-                // Neutral claims don't contribute
+            
+            // Map verdicts to a 0-100 scale where Entailment is 100, Contradiction is 0
+            if (verdict === 'entailment') {
+                // High confidence entailment = high trust
+                totalScore += (50 + (confidence / 2)); 
+                validClaims++;
+            } else if (verdict === 'contradiction') {
+                // High confidence contradiction = low trust
+                totalScore += (50 - (confidence / 2));
+                validClaims++;
             } else {
-                // Low confidence claims contribute with reduced weight
-                if (verdict === 'entailment') {
-                    weightedSum += weight * confidence * 0.5;
-                } else if (verdict === 'contradiction') {
-                    weightedSum -= weight * confidence * 0.5;
-                }
-                totalWeight += weight * 0.5;
+                // Neutral claims minimally affect the score
+                totalScore += 50; 
+                validClaims++;
             }
         }
 
-        // Avoid division by zero
-        if (totalWeight === 0) return 50;
+        if (validClaims === 0) return 50;
 
-        // Normalize weighted sum to 0-100 range
-        const maxPossibleScore = totalWeight * 100;
-        const normalizedScore = ((weightedSum + maxPossibleScore) / (2 * maxPossibleScore)) * 100;
-
-        return Math.max(0, Math.min(100, Math.round(normalizedScore)));
+        const averageScore = totalScore / validClaims;
+        return Math.max(0, Math.min(100, Math.round(averageScore)));
     }
 
     /**
